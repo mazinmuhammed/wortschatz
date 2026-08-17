@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wortschatz">
+<meta name="theme-color" content="#1E3A5F">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Wortschatz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --bg:#1E3A5F; --paper:#F6F1E7; --ink:#20242B; --cream:#F6F1E7;
+    --der:#2B5C9A;   /* masculine — blue */
+    --die:#B23A48;   /* feminine — red  */
+    --das:#3E7C53;   /* neuter — green  */
+    --neutral:#3A3F47; /* verbs/adj/other */
+    --gold:#D9A73B;
+    --moss:#5B8A5A; --brick:#C0483C;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--cream);
+    font-family:'Source Sans 3',sans-serif;
+    min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:max(28px,env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){*{animation:none!important; transition:none!important;}}
+
+  .wrap{width:100%; max-width:440px;}
+  header{margin-bottom:18px;}
+  h1{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:30px; margin:0; letter-spacing:-.5px;}
+  .sub{color:rgba(246,241,231,.62); font-size:13px; margin-top:3px;}
+
+  /* stats */
+  .stats{display:flex; gap:10px; margin-bottom:14px;}
+  .pill{flex:1; background:rgba(255,255,255,.08); border-radius:10px; padding:8px 10px;}
+  .pill .top{display:flex; align-items:center; gap:5px;}
+  .pill .val{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:15px;}
+  .pill .lab{font-size:10px; color:rgba(246,241,231,.55); text-transform:uppercase; letter-spacing:.5px; margin-top:2px;}
+  .dot{width:9px; height:9px; border-radius:50%;}
+
+  /* toggles */
+  .toggle{display:inline-flex; background:rgba(255,255,255,.08); border-radius:999px; padding:4px; margin-bottom:14px;}
+  .toggle button{
+    padding:8px 18px; border-radius:999px; border:none; cursor:pointer;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;
+    background:transparent; color:var(--cream); transition:background .15s;
+  }
+  .toggle button.active{background:var(--gold); color:var(--ink);}
+  .rowline{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;}
+  .levelsel{display:inline-flex; background:rgba(255,255,255,.08); border-radius:999px; padding:4px;}
+  .levelsel button{padding:6px 14px; border-radius:999px; border:none; cursor:pointer; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12px; background:transparent; color:var(--cream);}
+  .levelsel button.active{background:rgba(246,241,231,.9); color:var(--ink);}
+
+  /* card */
+  .card{
+    background:var(--paper); color:var(--ink); border-radius:18px; padding:30px 28px;
+    min-height:230px; box-shadow:0 10px 30px rgba(0,0,0,.28);
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .card.tap{cursor:pointer;}
+  .cardhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  .typetag{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.5px; text-transform:uppercase; opacity:.8;}
+  .word{font-family:'Space Grotesk',sans-serif; font-weight:700; line-height:1.1;}
+  .word.big{font-size:40px; text-align:center;}
+  .word.mid{font-size:26px; margin-bottom:4px;}
+  .hint{opacity:.4; font-size:12px; text-align:center; margin-top:18px;}
+  .english{font-size:17px; font-weight:600; color:#8A6A1F; margin-bottom:14px;}
+  .exwrap{border-top:1px solid rgba(32,36,43,.14); padding-top:12px;}
+  .exrow{display:flex; align-items:flex-start; gap:8px;}
+  .exde{font-style:italic; font-size:15px; margin:0; flex:1;}
+  .exen{opacity:.55; font-size:13px; margin:4px 0 0;}
+
+  .der{color:var(--der);} .die{color:var(--die);} .das{color:var(--das);} .neutral{color:var(--neutral);}
+
+  .spk{background:none; border:none; cursor:pointer; padding:4px; color:var(--ink); opacity:.55; display:inline-flex;}
+  .spk:active{opacity:1;}
+  .spk svg{width:22px; height:22px;}
+  .spk.sm svg{width:18px; height:18px;}
+
+  /* grade buttons */
+  .grade{display:flex; gap:10px; margin-top:14px;}
+  .grade button{
+    flex:1; padding:14px 0; border-radius:12px; border:none; cursor:pointer; color:#fff;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-again{background:var(--brick);}
+  .btn-know{background:var(--moss);}
+
+  /* typing */
+  input.answer{
+    width:100%; padding:13px 14px; border-radius:10px; font-size:18px;
+    font-family:'Space Grotesk',sans-serif; outline:none; color:var(--ink);
+    border:2px solid rgba(0,0,0,.14); background:#fff;
+  }
+  input.answer.correct{border-color:var(--moss); background:rgba(91,138,90,.10);}
+  input.answer.wrong{border-color:var(--brick); background:rgba(192,72,60,.10);}
+  .feedback{margin-top:12px; font-size:14px; font-weight:600;}
+  .feedback.correct{color:var(--moss);} .feedback.wrong{color:var(--brick);}
+  .checkbtn{
+    width:100%; margin-top:14px; padding:14px 0; border-radius:12px; border:none; cursor:pointer;
+    background:var(--gold); color:var(--ink); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px;
+  }
+
+  footer{margin-top:22px; display:flex; gap:18px; justify-content:center; flex-wrap:wrap;}
+  .link{background:none; border:none; color:rgba(246,241,231,.5); font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;}
+  .savenote{font-size:12px; margin-top:10px; text-align:center; max-width:380px;}
+  .savenote.err{color:#f0b0a8;} .savenote.ok{color:rgba(246,241,231,.4);}
+
+  .done{background:var(--paper); color:var(--ink); border-radius:18px; padding:34px; text-align:center;}
+  .done h2{font-family:'Space Grotesk',sans-serif; margin:8px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Wortschatz</h1>
+    <div class="sub" id="subline">dein Wortschatz wächst</div>
+  </header>
+
+  <div class="stats">
+    <div class="pill"><div class="top"><span class="dot" style="background:var(--gold)"></span><span class="val" id="stat-streak">0</span></div><div class="lab">Streak</div></div>
+    <div class="pill"><div class="top"><span class="dot" style="background:var(--moss)"></span><span class="val" id="stat-mastered">0</span></div><div class="lab">Gemeistert</div></div>
+    <div class="pill"><div class="top"><span class="dot" style="background:var(--brick)"></span><span class="val" id="stat-acc">—</span></div><div class="lab">Genauigkeit</div></div>
+  </div>
+
+  <div class="rowline">
+    <div class="toggle" id="mode-toggle">
+      <button data-mode="flashcard" class="active">Karten</button>
+      <button data-mode="type">Tippen</button>
+    </div>
+    <div class="levelsel" id="level-toggle">
+      <button data-level="A2" class="active">A2</button>
+      <button data-level="B1">B1</button>
+      <button data-level="ALL">Alle</button>
+    </div>
+  </div>
+
+  <div id="stage"></div>
+
+  <footer>
+    <button class="link" id="reset-btn">↺ Fortschritt zurücksetzen</button>
+  </footer>
+  <div id="savenote"></div>
+</div>
+
+<script src="words.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- SVG icons ----------
+  const spkIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+
+  // ---------- state ----------
+  const STORAGE_KEY = "wortschatz-progress-v1";
+  const SETTINGS_KEY = "wortschatz-settings-v1";
+  let progress = load(STORAGE_KEY, {});
+  let settings = load(SETTINGS_KEY, { mode:"flashcard", level:"A2" });
+  let mode = settings.mode || "flashcard";
+  let level = settings.level || "A2";
+  let deck = [];
+  let current = null;
+  let flipped = false;
+  let session = { correct:0, total:0, streak:0 };
+  let saveErr = false;
+
+  // ---------- storage helpers ----------
+  function load(key, fallback){
+    try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+    catch(e){ return fallback; }
+  }
+  function save(key, obj){
+    try{ localStorage.setItem(key, JSON.stringify(obj)); saveErr=false; }
+    catch(e){ saveErr=true; }
+    renderSaveNote();
+  }
+  function persistProgress(){ save(STORAGE_KEY, progress); }
+  function persistSettings(){ save(SETTINGS_KEY, { mode, level }); }
+
+  // ---------- word model ----------
+  function makeWord(entry, idx){
+    const [article, wordCol, english, type, exDe, exEn] = entry.data;
+    const isNoun = type === "noun";
+    return {
+      id: entry.level + "-" + idx,
+      level: entry.level,
+      article: isNoun ? article : null,
+      german: isNoun ? wordCol : article, // non-nouns store the term in the article column
+      english, type, exDe, exEn,
+      full: isNoun ? (article + " " + wordCol) : article,
+    };
+  }
+  const ALL = WORD_BANK.map(makeWord);
+
+  function buildDeck(){
+    deck = ALL.filter(w => level === "ALL" ? true : w.level === level);
+    if(deck.length === 0) deck = ALL.slice(); // safety
+  }
+
+  function genderClass(w){
+    if(w.article === "der") return "der";
+    if(w.article === "die") return "die";
+    if(w.article === "das") return "das";
+    return "neutral";
+  }
+  function typeLabel(w){
+    if(w.article) return w.article + " · " + (w.article==="der"?"maskulin":w.article==="die"?"feminin":"neutrum");
+    if(w.type === "verb") return "Verb";
+    if(w.type === "adjective") return "Adjektiv";
+    return "Wort";
+  }
+
+  // ---------- spaced-repetition-ish pick ----------
+  function pickNext(){
+    if(deck.length === 1) return deck[0];
+    let weights = deck.map(w=>{
+      if(current && w.id === current.id) return 0.0001;
+      const p = progress[w.id] || {streak:0, mastered:false};
+      if(p.mastered) return 1;
+      return 5 - Math.min(p.streak||0, 4);
+    });
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random()*total;
+    for(let i=0;i<deck.length;i++){ r -= weights[i]; if(r<=0) return deck[i]; }
+    return deck[Math.floor(Math.random()*deck.length)];
+  }
+
+  // ---------- speech ----------
+  let deVoice = null;
+  function pickVoice(){
+    if(!("speechSynthesis" in window)) return;
+    const vs = speechSynthesis.getVoices();
+    deVoice = vs.find(v=>/de[-_]DE/i.test(v.lang)) || vs.find(v=>/^de/i.test(v.lang)) || null;
+  }
+  if("speechSynthesis" in window){
+    pickVoice();
+    speechSynthesis.onvoiceschanged = pickVoice;
+  }
+  function speak(text){
+    try{
+      if(!("speechSynthesis" in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "de-DE"; u.rate = .9;
+      if(deVoice) u.voice = deVoice;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  // ---------- progress update ----------
+  function updateProgress(id, correct){
+    const p = progress[id] || {streak:0, seen:0, correct:0, mastered:false};
+    const nextStreak = correct ? p.streak+1 : 0;
+    progress[id] = {
+      streak: nextStreak,
+      seen: p.seen+1,
+      correct: p.correct + (correct?1:0),
+      mastered: nextStreak >= 3,
+    };
+    session.total++;
+    if(correct) session.correct++;
+    session.streak = correct ? session.streak+1 : 0;
+    persistProgress();
+    renderStats();
+  }
+
+  function masteredCount(){
+    return deck.reduce((n,w)=> n + ((progress[w.id]&&progress[w.id].mastered)?1:0), 0);
+  }
+
+  // ---------- rendering ----------
+  const stage = document.getElementById("stage");
+
+  function renderStats(){
+    document.getElementById("stat-streak").textContent = session.streak;
+    document.getElementById("stat-mastered").textContent = masteredCount() + "/" + deck.length;
+    document.getElementById("stat-acc").textContent = session.total ? Math.round(session.correct/session.total*100) + "%" : "—";
+    const levels = {A2:"A2", B1:"B1", ALL:"A2 + B1"};
+    document.getElementById("subline").textContent = "dein Wortschatz wächst · " + levels[level] + " · " + deck.length + " Wörter";
+  }
+
+  function renderSaveNote(){
+    const el = document.getElementById("savenote");
+    if(saveErr){
+      el.className = "savenote err";
+      el.textContent = "Speichern auf dem Gerät ist gerade blockiert (evtl. privater Modus). Fortschritt gilt nur für diese Sitzung.";
+    } else {
+      el.className = "savenote ok";
+      el.textContent = "Fortschritt wird auf diesem Gerät gespeichert.";
+    }
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+  function renderCard(){
+    if(!current) current = pickNext();
+    const w = current;
+    const gc = genderClass(w);
+
+    if(mode === "flashcard"){
+      stage.innerHTML =
+        '<div class="card tap" id="card">'
+        + '<div class="cardhead"><span class="typetag '+gc+'">'+esc(typeLabel(w))+'</span>'
+        + '<button class="spk" id="spk-word" aria-label="Wort anhören">'+spkIcon+'</button></div>'
+        + (!flipped
+            ? '<div class="word big '+gc+'">'+esc(w.full)+'</div><div class="hint">zum Umdrehen tippen</div>'
+            : '<div class="word mid '+gc+'">'+esc(w.full)+'</div>'
+              + '<div class="english">'+esc(w.english)+'</div>'
+              + '<div class="exwrap"><div class="exrow"><p class="exde">'+esc(w.exDe)+'</p>'
+              + '<button class="spk sm" id="spk-sentence" aria-label="Satz anhören">'+spkIcon+'</button></div>'
+              + '<p class="exen">'+esc(w.exEn)+'</p></div>'
+          )
+        + '</div>'
+        + (flipped
+            ? '<div class="grade"><button class="btn-again" id="g-again">✕ Nochmal</button><button class="btn-know" id="g-know">✓ Gewusst</button></div>'
+            : '');
+
+      document.getElementById("card").onclick = (e)=>{
+        if(e.target.closest(".spk")) return;
+        flipped = !flipped; renderCard();
+      };
+      document.getElementById("spk-word").onclick = (e)=>{ e.stopPropagation(); speak(w.full); };
+      const ss = document.getElementById("spk-sentence");
+      if(ss) ss.onclick = (e)=>{ e.stopPropagation(); speak(w.exDe); };
+      if(flipped){
+        document.getElementById("g-again").onclick = ()=>grade(false);
+        document.getElementById("g-know").onclick  = ()=>grade(true);
+      }
+    } else {
+      // typing mode
+      stage.innerHTML =
+        '<div class="card">'
+        + '<div class="cardhead"><span class="typetag '+gc+'">'+esc(typeLabel(w))+'</span>'
+        + '<button class="spk" id="spk-word" aria-label="Wort anhören">'+spkIcon+'</button></div>'
+        + '<div class="word mid neutral">'+esc(w.english)+'</div>'
+        + '<div class="exrow"><p class="exen" style="flex:1">'+esc(w.exEn)+'</p>'
+        + '<button class="spk sm" id="spk-sentence" aria-label="Satz anhören">'+spkIcon+'</button></div>'
+        + '<input class="answer" id="answer" autocomplete="off" autocapitalize="off" spellcheck="false" '
+        + 'placeholder="'+(w.article?"z. B. der Tisch":"auf Deutsch…")+'">'
+        + '<div class="feedback" id="feedback"></div>'
+        + '</div>'
+        + '<button class="checkbtn" id="check">Prüfen</button>';
+
+      const input = document.getElementById("answer");
+      const checkBtn = document.getElementById("check");
+      let answered = false;
+      input.focus();
+
+      document.getElementById("spk-word").onclick = ()=>speak(w.full);
+      document.getElementById("spk-sentence").onclick = ()=>speak(w.exDe);
+
+      function submit(){
+        if(answered){ flipped=false; current=pickNext(); renderCard(); return; }
+        const norm = s => s.trim().toLowerCase().replace(/\s+/g," ");
+        const correct = norm(input.value) === norm(w.full);
+        answered = true;
+        input.className = "answer " + (correct?"correct":"wrong");
+        input.disabled = true;
+        const fb = document.getElementById("feedback");
+        fb.className = "feedback " + (correct?"correct":"wrong");
+        fb.textContent = correct ? "Richtig!" : "Richtig wäre: " + w.full;
+        checkBtn.textContent = "Weiter";
+        updateProgress(w.id, correct);
+        if(!correct) speak(w.full);
+      }
+      checkBtn.onclick = submit;
+      input.addEventListener("keydown", e=>{ if(e.key==="Enter") submit(); });
+    }
+    renderStats();
+  }
+
+  function grade(correct){
+    updateProgress(current.id, correct);
+    flipped = false;
+    current = pickNext();
+    renderCard();
+  }
+
+  // ---------- controls ----------
+  document.getElementById("mode-toggle").addEventListener("click", e=>{
+    const b = e.target.closest("button"); if(!b) return;
+    mode = b.dataset.mode; flipped = false;
+    [...e.currentTarget.children].forEach(c=>c.classList.toggle("active", c===b));
+    persistSettings(); renderCard();
+  });
+  document.getElementById("level-toggle").addEventListener("click", e=>{
+    const b = e.target.closest("button"); if(!b) return;
+    level = b.dataset.level; flipped = false; current = null;
+    [...e.currentTarget.children].forEach(c=>c.classList.toggle("active", c===b));
+    buildDeck(); persistSettings(); renderCard();
+  });
+  document.getElementById("reset-btn").addEventListener("click", ()=>{
+    if(!confirm("Allen gespeicherten Fortschritt zurücksetzen? Das kann nicht rückgängig gemacht werden.")) return;
+    progress = {}; session = {correct:0,total:0,streak:0}; current=null; flipped=false;
+    persistProgress(); renderCard();
+  });
+
+  // ---------- init ----------
+  // sync toggle UI to saved settings
+  [...document.querySelectorAll("#mode-toggle button")].forEach(b=>b.classList.toggle("active", b.dataset.mode===mode));
+  [...document.querySelectorAll("#level-toggle button")].forEach(b=>b.classList.toggle("active", b.dataset.level===level));
+  buildDeck();
+  renderCard();
+  renderSaveNote();
+
+  // service worker (offline)
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>
